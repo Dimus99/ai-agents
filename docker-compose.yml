@@ -1,0 +1,87 @@
+version: "3.9"
+services:
+  backend:
+    build: ./backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      APP_NAME: "AI Agents Orchestrator"
+      ENV: "local"
+      DEBUG: "true"
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/agents"
+      REDIS_URL: "redis://redis:6379/0"
+      CELERY_BROKER_URL: "redis://redis:6379/1"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/2"
+      BYBIT_BASE_URL: "https://api-testnet.bybit.com"
+      BYBIT_SYMBOL: "BTCUSDT"
+      BYBIT_INTERVAL: "15"
+      BYBIT_LOOKBACK_CANDLES: "200"
+      LLM_PROVIDER: "ollama"
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      OLLAMA_MODEL: "mistral"
+      SCHEDULER_ENABLED: "true"
+      SCHEDULE_CRON: "*/15 * * * *"
+      LOG_LEVEL: "INFO"
+      LOG_JSON: "true"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    build: ./backend
+    command: celery -A app.services.scheduler.celery_app worker --loglevel=INFO
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/agents"
+      CELERY_BROKER_URL: "redis://redis:6379/1"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/2"
+      SCHEDULER_ENABLED: "true"
+      SCHEDULE_CRON: "*/15 * * * *"
+      LLM_PROVIDER: "ollama"
+      OLLAMA_BASE_URL: "http://host.docker.internal:11434"
+      OLLAMA_MODEL: "mistral"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+      - redis
+
+  beat:
+    build: ./backend
+    command: celery -A app.services.scheduler.celery_app beat --loglevel=INFO
+    environment:
+      DATABASE_URL: "postgresql+asyncpg://postgres:postgres@db:5432/agents"
+      CELERY_BROKER_URL: "redis://redis:6379/1"
+      CELERY_RESULT_BACKEND: "redis://redis:6379/2"
+      SCHEDULER_ENABLED: "true"
+      SCHEDULE_CRON: "*/15 * * * *"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - worker
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: agents
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  db_data:
+  redis_data:
+
+
