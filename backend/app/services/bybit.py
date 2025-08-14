@@ -14,7 +14,7 @@ settings = get_settings()
 
 class BybitService:
     def __init__(self, base_url: str | None = None):
-        self.base_url = base_url or settings.bybit_base_url
+        self.base_url = str(base_url or settings.bybit_base_url)
         self._client = httpx.AsyncClient(base_url=self.base_url, timeout=30)
 
     async def close(self):

@@ -8,6 +8,7 @@ from app.core.config import get_settings
 from app.services.logging_setup import JsonFormatter
 from app.routes import agents as agents_routes
 from app.routes import orchestrator as orchestrator_routes
+from app.routes import public as public_routes
 
 
 def configure_logging():
@@ -45,6 +46,7 @@ def create_app() -> FastAPI:
                        prefix="/api/agents", tags=["agents"])
     app.include_router(orchestrator_routes.router,
                        prefix="/api/orchestrator", tags=["orchestrator"])
+    app.include_router(public_routes.router, tags=["public"])
     return app
 
 

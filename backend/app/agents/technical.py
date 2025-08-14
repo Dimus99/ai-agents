@@ -11,6 +11,7 @@ except Exception:  # pragma: no cover - optional in dev
     ta = None
 
 from app.core.config import get_settings
+from app.services.prompt_loader import load_prompts
 from app.services.bybit import BybitService
 from .base import AgentBase, Signal
 
@@ -18,11 +19,7 @@ from .base import AgentBase, Signal
 settings = get_settings()
 
 
-DEFAULT_TECH_PROMPT = (
-    "You are a technical analysis agent. Use RSI(14), MACD(12,26,9), SMA(50,200).\n"
-    "Rules: \n- If price above SMA200 and RSI<30 -> buy.\n- If price below SMA200 and RSI>70 -> sell.\n- If MACD crosses up -> buy bias; crosses down -> sell bias.\n"
-    "Return one of: buy, sell, hold."
-)
+DEFAULT_TECH_PROMPT = load_prompts().technical.base_prompt
 
 
 class TechnicalAgent(AgentBase):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import select, update
@@ -49,6 +50,8 @@ async def run_round(db: AsyncSession, name: str = "round") -> Round:
     round_obj = Round(name=name)
     db.add(round_obj)
     await db.flush()
+    # Persist the new round early so that other API calls can see a "running" round
+    await db.commit()
 
     agents = (await db.execute(select(Agent).where(Agent.is_active == True))).scalars().all()  # noqa: E712
     runtime_agents: list[RuntimeAgent] = [
@@ -67,6 +70,7 @@ async def run_round(db: AsyncSession, name: str = "round") -> Round:
     await db.commit()
 
     await evolve_agents(db, round_obj)
+    round_obj.finished_at = datetime.utcnow()
     await db.commit()
     return round_obj
 
@@ -95,9 +99,14 @@ async def evolve_agents(db: AsyncSession, round_obj: Round) -> None:
 
         # mutations
         for idx, base_agent in enumerate(elites[: settings.mutated_per_type]):
-            description = f"Type: {agent_type}. Generation: {base_agent.generation}." \
+            description = (
+                f"Type: {agent_type}. Generation: {base_agent.generation}."
                 + " Goal: increase PnL with robust, low overfit rules."
-            improved = await llm.mutate_prompt(description, base_agent.prompt)
+            )
+            try:
+                improved = await llm.mutate_prompt(description, base_agent.prompt)
+            except Exception:
+                improved = base_agent.prompt
             new_agents.append(
                 Agent(
                     name=f"{agent_type}_mut_{base_agent.id}_{idx}",

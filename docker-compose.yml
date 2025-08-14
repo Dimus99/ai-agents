@@ -1,5 +1,15 @@
 version: "3.9"
 services:
+  frontend:
+    build: ./frontend
+    command: sh -lc "npm install --legacy-peer-deps && npm run dev -- --host"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
   backend:
     build: ./backend
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -63,7 +73,7 @@ services:
       - worker
 
   db:
-    image: postgres:15
+    image: postgres:16
     environment:
       POSTGRES_DB: agents
       POSTGRES_USER: postgres

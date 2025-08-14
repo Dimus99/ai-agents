@@ -14,17 +14,21 @@ class NewsService:
         await self._client.aclose()
 
     async def fetch_headlines(self, limit: int = 20) -> list[dict[str, Any]]:
-        r = await self._client.get(self._rss_url)
-        r.raise_for_status()
-        data = r.json()
-        items = data.get("results", [])[:limit]
-        headlines = [
-            {
-                "title": item.get("title"),
-                "url": item.get("url"),
-                "source": item.get("domain"),
-                "published_at": item.get("published_at"),
-            }
-            for item in items
-        ]
-        return headlines
+        try:
+            r = await self._client.get(self._rss_url)
+            if r.status_code != 200:
+                return []
+            data = r.json()
+            items = data.get("results", [])[:limit]
+            headlines = [
+                {
+                    "title": item.get("title"),
+                    "url": item.get("url"),
+                    "source": item.get("domain"),
+                    "published_at": item.get("published_at"),
+                }
+                for item in items
+            ]
+            return headlines
+        except Exception:
+            return []

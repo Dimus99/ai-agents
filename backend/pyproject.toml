@@ -10,15 +10,18 @@ fastapi = "^0.111.0"
 uvicorn = {extras = ["standard"], version = "^0.30.0"}
 sqlalchemy = "^2.0.31"
 asyncpg = "^0.29.0"
+psycopg2-binary = "^2.9.9"
 alembic = "^1.13.2"
 httpx = "^0.27.0"
 pydantic = "^2.8.2"
+pydantic-settings = "^2.4.0"
 python-dotenv = "^1.0.1"
 celery = "^5.4.0"
 redis = "^5.0.7"
 numpy = "^2.0.1"
 pandas = "^2.2.2"
 pandas-ta = "^0.3.14b0"
+PyYAML = "^6.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.1"

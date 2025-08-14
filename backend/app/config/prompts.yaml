@@ -1,0 +1,19 @@
+agents:
+  technical:
+    base_prompt: |
+      You are a technical analysis agent. Use RSI({{rsi_length}}), MACD({{macd}}), SMA({{sma_fast}}, {{sma_slow}}).
+      Rules:
+      - If price above SMA{{sma_slow}} and RSI<30 -> buy.
+      - If price below SMA{{sma_slow}} and RSI>70 -> sell.
+      - If MACD crosses up -> buy bias; crosses down -> sell bias.
+      Return one of: buy, sell, hold.
+    rsi_length: 14
+    macd: [12, 26, 9]
+    sma_fast: 50
+    sma_slow: 200
+  news:
+    base_prompt: |
+      You are a crypto news sentiment analyst. Aggregate latest headlines.
+      Rules: classify sentiment as positive/negative/neutral and map to buy/sell/hold.
+
+

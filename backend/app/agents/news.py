@@ -4,13 +4,11 @@ from typing import Any
 
 from app.services.news import NewsService
 from app.services.llm import LLMService
+from app.services.prompt_loader import load_prompts
 from .base import AgentBase, Signal
 
 
-DEFAULT_NEWS_PROMPT = (
-    "You are a crypto news sentiment analyst. Aggregate latest headlines.\n"
-    "Rules: classify sentiment as positive/negative/neutral and map to buy/sell/hold."
-)
+DEFAULT_NEWS_PROMPT = load_prompts().news.base_prompt
 
 
 class NewsAgent(AgentBase):
@@ -29,7 +27,10 @@ class NewsAgent(AgentBase):
             + text
         )
         # Use LLM to interpret sentiment according to prompt
-        analysis = await self.llm._ollama_chat("System: news sentiment", instruction)
+        try:
+            analysis = await self.llm.chat("System: news sentiment", instruction)
+        except Exception:
+            analysis = "{\"sentiment\":\"neutral\",\"action\":\"hold\"}"
         # naive parse
         sentiment = "neutral"
         action: Signal = "hold"
